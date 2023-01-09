@@ -1,3 +1,4 @@
+// go build -ldflags -H=windowsgui -o JobsToObsidian.exe main.go
 package main
 
 import (
