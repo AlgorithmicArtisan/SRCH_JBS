@@ -34,7 +34,7 @@ func getPageIndex() (int, error) {
 		if bytes.Index(data, lookfor) != -1 {
 			break
 		} else {
-			fmt.Println("На странице " + fmt.Sprint(page_index) + " бесплатных обьявлений не найдено!")
+			//fmt.Println("На странице " + fmt.Sprint(page_index) + " бесплатных обьявлений не найдено!")
 			page_index++
 			if page_index > 150 {
 				return -1, errors.New("Превышен лимит на обработку страниц!")
@@ -47,12 +47,11 @@ func getPageIndex() (int, error) {
 func main() {
 	const OBS_PATH string = "C:\\Users\\Администратор\\Dropbox\\ObsidianDATA\\main\\Other\\Работа.md"
 	//Получаем индекс страницы, содержащей в себе бесплатные обьявления.
-	// page_index, err := getPageIndex()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
-	page_index := 22
+	page_index, err := getPageIndex()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	//Создаём файл хранения данных
 	file, err := os.Create(OBS_PATH)
