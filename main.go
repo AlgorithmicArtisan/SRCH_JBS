@@ -2,59 +2,24 @@
 package main
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
-	"io"
+	"JobSearching/belmeta"
+	"JobSearching/praca"
+	"JobSearching/rabota"
 	"log"
-	"net/http"
 	"os"
-	"regexp"
-	"strings"
-
-	//"reflect"
-
-	"github.com/gocolly/colly"
+	"time"
 )
 
-func getError(err error) {
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func getPageIndex() (int, error) {
-	var page_index int
-	lookfor := []byte(`standard vac-small`)
-	for {
-		response, err := http.Get(fmt.Sprintf("https://praca.by/search/vacancies/?page=%d&search[cities][Минск]=1&search[query]=&search[cities-radius][Минск]=1&search[query-text-params][headline]=0&form-submit-btn=Искать", page_index))
-		getError(err)
-		data, err := io.ReadAll(response.Body)
-		getError(err)
-		defer response.Body.Close()
-		if bytes.Index(data, lookfor) != -1 {
-			break
-		} else {
-			//fmt.Println("На странице " + fmt.Sprint(page_index) + " бесплатных обьявлений не найдено!")
-			page_index++
-			if page_index > 150 {
-				return -1, errors.New("Превышен лимит на обработку страниц!")
-			}
-		}
-	}
-	return page_index, nil
-}
-
 func main() {
-	const OBS_PATH string = "C:\\Users\\Администратор\\Dropbox\\ObsidianDATA\\main\\Other\\Работа.md"
-	//Получаем индекс страницы, содержащей в себе бесплатные обьявления.
-	page_index, err := getPageIndex()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
+	// Путь к файлу в Obsidian, содержащего информацио о работе
+	OBS_PATH := os.ExpandEnv("$USERPROFILE\\Dropbox\\ObsidianDATA\\main\\Other\\РаботаTEST.md")
 
-	//Создаём файл хранения данных
+	//Получаем данные из различных сайтов
+	rabota_jobs := rabota.GetVac()
+	praca_jobs := praca.GetVac()
+	belmeta_jobs := belmeta.GetVac()
+
+	//Создаём файл хранения всех данных в Obsidian
 	file, err := os.Create(OBS_PATH)
 	if err != nil {
 		log.Fatal(err)
@@ -63,46 +28,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	file.Write([]byte("#Работа\n\n"))
-	defer file.Close()
+	now := time.Now().Format("02 Jan 06 15:04 MST")
+	file.Write([]byte("#Работа\n" + now + "\n"))
 
-	c := colly.NewCollector(
-		// Посещение только домена praca.by
-		colly.AllowedDomains("praca.by"),
-	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for i := 0; i < len(rabota_jobs); i++ {
+		file.Write([]byte("[" + rabota_jobs[i].Title + "]" + "(" + rabota_jobs[i].Url + ")" + "\n" + "[" + rabota_jobs[i].Org_title + "]" + "(" + rabota_jobs[i].Org_url + ")" + "\n" + rabota_jobs[i].Salary + "\n" + rabota_jobs[i].Expirience + "\n\n"))
+	}
 
-	c.OnHTML("li.standard.vac-small", func(element *colly.HTMLElement) {
-		// Найти элемент <a class="vac-small__title-link"> внутри текущего элемента
-		aElement := element.DOM
-		// Получить текст этого элемента и ссылку
-		text := aElement.Find("a.vac-small__title-link").Text()
-		url, _ := aElement.Find("a.vac-small__title-link").Attr("href")
-		Org_url, _ := aElement.Find("a.vac-small__organization").Attr("href")
-		Org_text := aElement.Find("a.vac-small__organization").Text()
-		raw_salary := aElement.Find("span.salary-dotted").Text()
-		expirience := aElement.Find("div.vac-small__experience").Text()
+	for i := 0; i < len(praca_jobs); i++ {
+		file.Write([]byte("[" + praca_jobs[i].Title + "]" + "(" + praca_jobs[i].Url + ")" + "\n" + "[" + praca_jobs[i].Org_title + "]" + "(" + praca_jobs[i].Org_url + ")" + "\n" + praca_jobs[i].Salary + "\n" + praca_jobs[i].Expirience + "\n\n"))
+	}
 
-		//Модифицируем строку с зарплатой
-		re := regexp.MustCompile(`[\d-]+`)
-		raw_2_salary := re.FindAllString(raw_salary, -1)
-		salary := strings.Join(raw_2_salary, " ")
-
-		//Заносим информацию в файл md
-		os.OpenFile(OBS_PATH, os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		file.Write([]byte("[" + text + "]" + "(" + url + ")" + " " + "[" + Org_text + "]" + "(" + Org_url + ")" + "\n" + salary + " " + expirience + "\n\n\n"))
-		//fmt.Println("Done!")
-	})
-	defer file.Close()
-
-	// Показать адрес посещаемой страницы
-	c.OnRequest(func(r *colly.Request) {
-		//fmt.Println("Visiting", r.URL.String())
-	})
-
-	// Запуск парсинга
-	c.Visit(fmt.Sprintf("https://praca.by/search/vacancies/?page=%d&search[cities][Минск]=1&search[query]=&search[cities-radius][Минск]=1&search[query-text-params][headline]=0&form-submit-btn=Искать", page_index))
-
+	for i := 0; i < len(belmeta_jobs); i++ {
+		file.Write([]byte("[" + belmeta_jobs[i].Title + "]" + "(" + belmeta_jobs[i].Url + ")" + "\n" + "[" + belmeta_jobs[i].Org_title + "]" + "(" + belmeta_jobs[i].Org_url + ")" + "\n" + belmeta_jobs[i].Salary + "\n" + belmeta_jobs[i].Expirience + "\n\n"))
+	}
+	file.Close()
 }
