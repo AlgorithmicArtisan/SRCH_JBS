@@ -8,11 +8,6 @@ import (
 	"github.com/gocolly/colly"
 )
 
-var attempts int
-
-// Путь к странице сайта Belmeta.com
-const belmeta_url string = "https://belmeta.com/vacansii?l=Минск&sf=900&sort=date"
-
 // Определяем структуру вакансии
 type vacansy struct {
 	Title      string
@@ -38,18 +33,14 @@ func newVacansy(t, u, ot, ou, s, e string) {
 	})
 }
 
+var attempts int
+
+const BELMETA_URL string = "https://belmeta.com/vacansii?l=Минск&sf=900&sort=date"
+
 func GetVac() []vacansy {
 	c := colly.NewCollector()
 
-	c.OnHTML("div.company-wrap", func(element *colly.HTMLElement) {
-		aElement := element.DOM
-		raw_url, _ := aElement.Find("a").Attr("href")
-		o_url := ("https://belmeta.com/" + raw_url)
-		o_url = strings.TrimSpace(o_url)
-		overall_jobs[len(overall_jobs)-1].Org_url = o_url
-	})
-
-	c.OnHTML("article.job.no-logo", func(element *colly.HTMLElement) {
+	c.OnHTML("article.job", func(element *colly.HTMLElement) {
 		aElement := element.DOM
 		title := aElement.Find("h2.title").Text()
 		raw_url, _ := aElement.Find("h2.title").Find("a").Attr("href")
@@ -74,14 +65,16 @@ func GetVac() []vacansy {
 		}
 	})
 
-	c.Visit(belmeta_url)
+	c.Visit(BELMETA_URL)
 
 	if len(overall_jobs) < 1 {
 		GetVac()
 		attempts++
 	} else if attempts == 2 {
 		log.Fatal("Ошибка запроса на Belmeta.by")
+		return nil
 	}
 
 	return overall_jobs[:]
+
 }
