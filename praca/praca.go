@@ -1,6 +1,7 @@
 package praca
 
 import (
+	"JobSearching/ini"
 	"bytes"
 	"errors"
 	"fmt"
@@ -14,22 +15,12 @@ import (
 
 var attempts int
 
-// Определяем структуру вакансии
-type vacansy struct {
-	Title      string
-	Url        string
-	Org_title  string
-	Org_url    string
-	Salary     string
-	Expirience string
-}
-
 // Определяем срез для структур типа vacansy
-var overall_jobs []vacansy
+var overall_jobs []ini.Vacansy
 
 // Добавляет вакансию в срез вакансий
 func newVacansy(t, u, ot, ou, s, e string) {
-	overall_jobs = append(overall_jobs, vacansy{
+	overall_jobs = append(overall_jobs, ini.Vacansy{
 		Title:      t,
 		Url:        u,
 		Org_title:  ot,
@@ -69,7 +60,7 @@ func getPageIndex() (int, error) {
 	return page_index, nil
 }
 
-func GetVac() []vacansy {
+func GetVac() []ini.Vacansy {
 	//Получаем индекс страницы на Praca.by, содержащей в себе бесплатные обьявления.
 	page_index, err := getPageIndex()
 	if err != nil {
