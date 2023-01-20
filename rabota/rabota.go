@@ -1,32 +1,21 @@
 package rabota
 
 import (
+	"JobSearching/ini"
 	"log"
 	"strings"
 
 	"github.com/gocolly/colly"
 )
 
-const RABOTABY_URL = "https://rabota.by/search/vacancy?text=&salary=990&area=1002&ored_clusters=true&order_by=publication_time&enable_snippets=true&only_with_salary=true&search_period=1"
-
 var attempts int
 
-// Определяем структуру вакансии
-type vacansy struct {
-	Title      string
-	Url        string
-	Org_title  string
-	Org_url    string
-	Salary     string
-	Expirience string
-}
-
 // Определяем срез для структур типа vacansy
-var overall_jobs []vacansy
+var overall_jobs []ini.Vacansy
 
 // Добавляет вакансию в срез вакансий
 func newVacansy(t, u, ot, ou, s, e string) {
-	overall_jobs = append(overall_jobs, vacansy{
+	overall_jobs = append(overall_jobs, ini.Vacansy{
 		Title:      t,
 		Url:        u,
 		Org_title:  ot,
@@ -36,7 +25,7 @@ func newVacansy(t, u, ot, ou, s, e string) {
 	})
 }
 
-func GetVac() []vacansy {
+func GetVac() []ini.Vacansy {
 	c := colly.NewCollector()
 
 	c.OnHTML("div.serp-item[data-qa]", func(element *colly.HTMLElement) {
@@ -61,7 +50,7 @@ func GetVac() []vacansy {
 		}
 	})
 
-	c.Visit(RABOTABY_URL)
+	c.Visit(ini.RABOTABY_URL)
 
 	if len(overall_jobs) < 1 {
 		GetVac()
