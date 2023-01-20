@@ -1,6 +1,7 @@
 package belmeta
 
 import (
+	"JobSearching/ini"
 	"log"
 	"regexp"
 	"strings"
@@ -8,22 +9,12 @@ import (
 	"github.com/gocolly/colly"
 )
 
-// Определяем структуру вакансии
-type vacansy struct {
-	Title      string
-	Url        string
-	Org_title  string
-	Org_url    string
-	Salary     string
-	Expirience string
-}
-
 // Определяем срез для структур типа vacansy
-var overall_jobs []vacansy
+var overall_jobs []ini.Vacansy
 
 // Добавляет вакансию в срез вакансий
 func newVacansy(t, u, ot, ou, s, e string) {
-	overall_jobs = append(overall_jobs, vacansy{
+	overall_jobs = append(overall_jobs, ini.Vacansy{
 		Title:      t,
 		Url:        u,
 		Org_title:  ot,
@@ -35,9 +26,7 @@ func newVacansy(t, u, ot, ou, s, e string) {
 
 var attempts int
 
-const BELMETA_URL string = "https://belmeta.com/vacansii?l=Минск&sf=900&sort=date"
-
-func GetVac() []vacansy {
+func GetVac() []ini.Vacansy {
 	c := colly.NewCollector()
 
 	c.OnHTML("article.job", func(element *colly.HTMLElement) {
@@ -65,7 +54,7 @@ func GetVac() []vacansy {
 		}
 	})
 
-	c.Visit(BELMETA_URL)
+	c.Visit(ini.BELMETA_URL)
 
 	if len(overall_jobs) < 1 {
 		GetVac()
